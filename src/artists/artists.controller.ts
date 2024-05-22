@@ -1,9 +1,10 @@
-import {Body, Controller, Delete, Get, Param, Post, Res} from '@nestjs/common';
+import {Body, Controller, Delete, Get, Param, Post, Res, UploadedFile, UseInterceptors} from '@nestjs/common';
 import {InjectModel} from "@nestjs/mongoose";
 import {Artist, ArtistDocument} from "../schemas/artist.schema";
 import {Model} from "mongoose";
 import {CreateArtistDto} from "./create-artist.dto";
 import {Response} from "express";
+import {FileInterceptor} from "@nestjs/platform-express";
 
 @Controller('artists')
 export class ArtistsController {
@@ -14,11 +15,17 @@ export class ArtistsController {
     }
 
     @Post()
-    async create(@Body() artistDto: CreateArtistDto) {
+    @UseInterceptors(FileInterceptor('image', {dest: './public/images/artists'}))
+    async create(
+        @UploadedFile() file: Express.Multer.File,
+        @Body() artistDto: CreateArtistDto
+    ) {
+        const fileExt = file.mimetype.split('/')[1];
+        console.log(file);
         const artist = new this.artistModel({
             name: artistDto.name,
             information: artistDto.information,
-            image: artistDto.image,
+            image: file ? `/images/artists/${file.filename}.${fileExt}` : null,
         })
         return await artist.save();
     };
@@ -26,7 +33,7 @@ export class ArtistsController {
     @Get()
     async getAll() {
         return await this.artistModel.find();
-    }
+    };
 
     @Get(':id')
     async getById(@Param('id') id: string, @Res() res: Response) {
@@ -41,5 +48,5 @@ export class ArtistsController {
         if (!artistToDelete) return res.status(404).send({error: 'Artist not found'});
         await this.artistModel.deleteOne({_id: id});
         return res.send('Artist deleted');
-    }
+    };
 }

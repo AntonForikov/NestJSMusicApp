@@ -1,4 +1,4 @@
-import {Body, Controller, Delete, Get, Param, Post, Res} from '@nestjs/common';
+import {Body, Controller, Delete, Get, Param, Post, Query, Res} from '@nestjs/common';
 import {InjectModel} from "@nestjs/mongoose";
 import {Model} from "mongoose";
 import {Album, AlbumDocument} from "../schemas/album.schema";
@@ -20,19 +20,25 @@ export class AlbumsController {
             artist: albumDto.artist
         })
         return await album.save();
-    }
+    };
 
     @Get()
-    async getAll() {
-        return await this.albumModel.find();
-    }
+    async getAll(@Query('artistId') artistId: string, @Res() res: Response) {
+        if(artistId) {
+            const targetAlbums = await this.albumModel.find({artist: artistId});
+            if (targetAlbums.length === 0) return res.status(404).send({error: 'Album with such artist is not found'});
+            return res.send(targetAlbums);
+        }
+        const albums = await this.albumModel.find().populate('artist');
+        return res.send(albums);
+    };
 
     @Get(':id')
     async getAlbumById (@Param('id') id: string, @Res() res: Response) {
         const targetAlbum = await this.albumModel.findOne({_id: id});
         if (!targetAlbum) return res.status(404).send({error: 'Album not found.'});
         return res.send(targetAlbum);
-    }
+    };
 
     @Delete(':id')
     async deleteAlbum(@Param('id') id: string, @Res() res: Response) {
@@ -41,5 +47,5 @@ export class AlbumsController {
         if (!albumToDelete) return res.status(404).send({error: 'Album not found'});
         await this.albumModel.deleteOne({_id: id});
         return res.send('Album deleted');
-    }
+    };
 }

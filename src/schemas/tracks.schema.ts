@@ -1,34 +1,34 @@
 import {Prop, Schema, SchemaFactory} from "@nestjs/mongoose";
 import mongoose, {Document, Types} from "mongoose";
-import {Artist} from "./artist.schema";
+import {Album} from "./album.schema";
 
 @Schema()
-export class Album{
+export class Track{
     @Prop({required: true})
     title: string;
 
     @Prop({
-        ref: Artist.name,
+        ref: Album.name,
         required: true,
         validate: {
             validator: async function (id: Types.ObjectId)  {
-                const artist = await this.model('Artist').findById(id);
+                const artist = await this.model('Album').findById(id);
                 return Boolean(artist);
             },
-            message: 'Artist does not exist!!!!'
+            message: 'Album does not exist!!!!'
         }
     })
-    artist: mongoose.Schema.Types.ObjectId ;
+    album: mongoose.Schema.Types.ObjectId
 
     @Prop({required: true})
-    year: number;
+    duration: string;
 
-    @Prop({default: null})
-    image: string | null;
+    @Prop({required: true})
+    indexNumber: number;
 
     @Prop({required: true, default: false})
     isPublished: boolean;
 }
 
-export type AlbumDocument = Album & Document;
-export const AlbumSchema = SchemaFactory.createForClass(Album);
+export type TrackDocument = Track & Document;
+export const TrackSchema = SchemaFactory.createForClass(Track);
