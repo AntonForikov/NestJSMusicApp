@@ -6,17 +6,14 @@ export class Artist {
     @Prop({required: true})
     name: string;
 
-    @Prop()
+    @Prop({default: null})
     information: string | null;
 
-    @Prop()
+    @Prop({default: null})
     image: string | null;
 
-    @Prop()
+    @Prop({default: false})
     isPublished: boolean;
-
-    @Prop()
-    user: string;
 }
 
 export type ArtistDocument = Artist & Document;
