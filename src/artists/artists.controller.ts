@@ -20,8 +20,8 @@ export class ArtistsController {
         @UploadedFile() file: Express.Multer.File,
         @Body() artistDto: CreateArtistDto
     ) {
-        const fileExt = file.mimetype.split('/')[1];
-        console.log(file);
+        let fileExt: string;
+        if (file) fileExt = file.mimetype.split('/')[1];
         const artist = new this.artistModel({
             name: artistDto.name,
             information: artistDto.information,
