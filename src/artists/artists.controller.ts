@@ -5,6 +5,10 @@ import {Model} from "mongoose";
 import {CreateArtistDto} from "./create-artist.dto";
 import {Response} from "express";
 import {FileInterceptor} from "@nestjs/platform-express";
+import {diskStorage} from "multer";
+import {extname} from 'path';
+import {promises as fs} from 'fs';
+import {unlink} from "node:fs";
 
 @Controller('artists')
 export class ArtistsController {
@@ -15,19 +19,38 @@ export class ArtistsController {
     }
 
     @Post()
-    @UseInterceptors(FileInterceptor('image', {dest: './public/images/artists'}))
+    @UseInterceptors(
+        FileInterceptor('image', {
+            storage: diskStorage({
+                destination: async (_req, _file, cb) => {
+                    const destDir = './public/images/artists';
+                    await fs.mkdir(destDir, {recursive: true});
+                    cb(null, './public/images/artists');
+                },
+                filename: (_,file, cb) => {
+                    const ext = extname(file.originalname);
+                    const filename = `${crypto.randomUUID()}${ext}`;
+                    cb(null, filename);
+                }
+            })
+        }))
     async create(
         @UploadedFile() file: Express.Multer.File,
         @Body() artistDto: CreateArtistDto
     ) {
-        let fileExt: string;
-        if (file) fileExt = file.mimetype.split('/')[1];
-        const artist = new this.artistModel({
-            name: artistDto.name,
-            information: artistDto.information,
-            image: file ? `/images/artists/${file.filename}.${fileExt}` : null,
-        })
-        return await artist.save();
+        try {
+            const artist = new this.artistModel({
+                name: artistDto.name,
+                information: artistDto.information,
+                image: file ? `/images/artists/${file.filename}` : null,
+            })
+            return await artist.save();
+        } catch {
+            unlink(`./public/images/artists/${file.filename}`, (e) => {
+                if (e) return console.log('File does not exist');
+                console.log('File deleted');
+            });
+        }
     };
 
     @Get()

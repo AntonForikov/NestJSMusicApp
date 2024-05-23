@@ -5,6 +5,10 @@ import {Album, AlbumDocument} from "../schemas/album.schema";
 import {CreateAlbumDto} from "./create-album.dto";
 import {Response} from "express";
 import {FileInterceptor} from "@nestjs/platform-express";
+import {diskStorage} from "multer";
+import {extname} from "path";
+import {promises as fs} from "fs";
+import {unlink} from 'node:fs';
 
 @Controller('albums')
 export class AlbumsController {
@@ -13,20 +17,39 @@ export class AlbumsController {
         private albumModel: Model<AlbumDocument>,
     ) {}
     @Post()
-    @UseInterceptors(FileInterceptor('image', {dest: './public/images/albums'}))
+    @UseInterceptors(
+        FileInterceptor('image', {
+            storage: diskStorage({
+                destination: async (_req, _file, cb) => {
+                    const destDir = './public/images/albums';
+                    await fs.mkdir(destDir, {recursive: true});
+                    cb(null, './public/images/albums');
+                },
+                filename: (_,file, cb) => {
+                    const ext = extname(file.originalname);
+                    const filename = `${crypto.randomUUID()}${ext}`
+                    cb(null, filename)
+                }
+            })
+        }))
     async create(
         @UploadedFile() file: Express.Multer.File,
         @Body() albumDto: CreateAlbumDto
     ) {
-        let fileExt: string;
-        if (file) fileExt = file.mimetype.split('/')[1];
-        const album = new this.albumModel({
-            title: albumDto.title,
-            year: albumDto.year,
-            image: file ? `/images/artists/${file.filename}.${fileExt}` : null,
-            artist: albumDto.artist
-        })
-        return await album.save();
+        try {
+            const album = new this.albumModel({
+                title: albumDto.title,
+                year: albumDto.year,
+                image: file ? `/images/albums/${file.filename}` : null,
+                artist: albumDto.artist
+            })
+            return await album.save();
+        } catch {
+            unlink(`./public/images/albums/${file.filename}`, (e) => {
+                if (e) return console.log('File does not exist');
+                console.log('File deleted');
+            });
+        }
     };
 
     @Get()
