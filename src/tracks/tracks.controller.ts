@@ -19,7 +19,7 @@ export class TracksController {
             duration: trackDto.duration,
             indexNumber: trackDto.indexNumber,
             album: trackDto.album
-        })
+        });
         return await track.save();
     };
 
@@ -37,7 +37,6 @@ export class TracksController {
     @Delete(':id')
     async deleteTrack(@Param('id') id: string, @Res() res: Response) {
         const trackToDelete = await this.trackModel.findOne({_id: id}).populate('album');
-        console.log(trackToDelete)
         if (!trackToDelete) return res.status(404).send({error: 'Track not found'});
         await this.trackModel.deleteOne({_id: id});
         return res.send('Track deleted');

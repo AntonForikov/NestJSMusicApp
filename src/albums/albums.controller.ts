@@ -15,7 +15,7 @@ export class AlbumsController {
     constructor(
         @InjectModel(Album.name)
         private albumModel: Model<AlbumDocument>,
-    ) {}
+    ) {};
     @Post()
     @UseInterceptors(
         FileInterceptor('image', {
@@ -42,7 +42,7 @@ export class AlbumsController {
                 year: albumDto.year,
                 image: file ? `/images/albums/${file.filename}` : null,
                 artist: albumDto.artist
-            })
+            });
             return await album.save();
         } catch {
             unlink(`./public/images/albums/${file.filename}`, (e) => {
@@ -73,7 +73,6 @@ export class AlbumsController {
     @Delete(':id')
     async deleteAlbum(@Param('id') id: string, @Res() res: Response) {
         const albumToDelete = await this.albumModel.findOne({_id: id});
-        console.log(albumToDelete)
         if (!albumToDelete) return res.status(404).send({error: 'Album not found'});
         await this.albumModel.deleteOne({_id: id});
         return res.send('Album deleted');

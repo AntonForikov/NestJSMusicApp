@@ -16,7 +16,7 @@ export class ArtistsController {
         @InjectModel(Artist.name)
         private artistModel: Model<ArtistDocument>
     ) {
-    }
+    };
 
     @Post()
     @UseInterceptors(
@@ -43,7 +43,7 @@ export class ArtistsController {
                 name: artistDto.name,
                 information: artistDto.information,
                 image: file ? `/images/artists/${file.filename}` : null,
-            })
+            });
             return await artist.save();
         } catch {
             unlink(`./public/images/artists/${file.filename}`, (e) => {
