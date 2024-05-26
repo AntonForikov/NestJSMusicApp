@@ -22,6 +22,7 @@ import {extname} from "path";
 import {promises as fs} from "fs";
 import {unlink} from 'node:fs';
 import {TokenAuthGuard} from "../auth/token-auth.guard";
+import {RoleAuthGuard} from "../auth/role-auth.guard";
 
 @Controller('albums')
 export class AlbumsController {
@@ -85,6 +86,7 @@ export class AlbumsController {
         return res.send(targetAlbum);
     };
 
+    @UseGuards(RoleAuthGuard)
     @Delete(':id')
     async deleteAlbum(@Param('id') id: string, @Res() res: Response) {
         const albumToDelete = await this.albumModel.findOne({_id: id});

@@ -21,6 +21,7 @@ import {extname} from 'path';
 import {promises as fs} from 'fs';
 import {unlink} from "node:fs";
 import {TokenAuthGuard} from "../auth/token-auth.guard";
+import {RoleAuthGuard} from "../auth/role-auth.guard";
 
 @Controller('artists')
 export class ArtistsController {
@@ -81,6 +82,7 @@ export class ArtistsController {
         return res.send(artist);
     };
 
+    @UseGuards(RoleAuthGuard)
     @Delete(':id')
     async deleteArtist(@Param('id') id: string, @Res() res: Response) {
         const artistToDelete = await this.artistModel.findOne({_id: id});
