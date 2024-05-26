@@ -1,4 +1,15 @@
-import {Body, Controller, Delete, Get, Param, Post, Res, UploadedFile, UseInterceptors} from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    Post,
+    Res,
+    UploadedFile,
+    UseGuards,
+    UseInterceptors
+} from '@nestjs/common';
 import {InjectModel} from "@nestjs/mongoose";
 import {Artist, ArtistDocument} from "../schemas/artist.schema";
 import {Model} from "mongoose";
@@ -9,6 +20,7 @@ import {diskStorage} from "multer";
 import {extname} from 'path';
 import {promises as fs} from 'fs';
 import {unlink} from "node:fs";
+import {TokenAuthGuard} from "../auth/token-auth.guard";
 
 @Controller('artists')
 export class ArtistsController {
@@ -18,11 +30,12 @@ export class ArtistsController {
     ) {
     };
 
+    @UseGuards(TokenAuthGuard)
     @Post()
     @UseInterceptors(
         FileInterceptor('image', {
             storage: diskStorage({
-                destination: async (_req, _file, cb) => {
+                destination: async (_req, file, cb) => {
                     const destDir = './public/images/artists';
                     await fs.mkdir(destDir, {recursive: true});
                     cb(null, './public/images/artists');
@@ -36,20 +49,23 @@ export class ArtistsController {
         }))
     async create(
         @UploadedFile() file: Express.Multer.File,
-        @Body() artistDto: CreateArtistDto
+        @Body() artistDto: CreateArtistDto,
+        @Res() res: Response
     ) {
         try {
             const artist = new this.artistModel({
                 name: artistDto.name,
                 information: artistDto.information,
-                image: file ? `/images/artists/${file.filename}` : null,
+                image: file && file.filename !== null ? `/images/artists/${file.filename}` : null,
             });
-            return await artist.save();
-        } catch {
+            await artist.save();
+            return res.send(artist);
+        } catch (e) {
             unlink(`./public/images/artists/${file.filename}`, (e) => {
                 if (e) return console.log('File does not exist');
                 console.log('File deleted');
             });
+            return res.status(400).send(e)
         }
     };
 

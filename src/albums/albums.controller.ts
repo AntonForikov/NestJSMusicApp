@@ -1,4 +1,16 @@
-import {Body, Controller, Delete, Get, Param, Post, Query, Res, UploadedFile, UseInterceptors} from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    Post,
+    Query,
+    Res,
+    UploadedFile,
+    UseGuards,
+    UseInterceptors
+} from '@nestjs/common';
 import {InjectModel} from "@nestjs/mongoose";
 import {Model} from "mongoose";
 import {Album, AlbumDocument} from "../schemas/album.schema";
@@ -9,6 +21,7 @@ import {diskStorage} from "multer";
 import {extname} from "path";
 import {promises as fs} from "fs";
 import {unlink} from 'node:fs';
+import {TokenAuthGuard} from "../auth/token-auth.guard";
 
 @Controller('albums')
 export class AlbumsController {
@@ -16,6 +29,8 @@ export class AlbumsController {
         @InjectModel(Album.name)
         private albumModel: Model<AlbumDocument>,
     ) {};
+
+    @UseGuards(TokenAuthGuard)
     @Post()
     @UseInterceptors(
         FileInterceptor('image', {
