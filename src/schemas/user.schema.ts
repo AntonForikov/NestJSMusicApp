@@ -3,6 +3,12 @@ import {Document} from "mongoose";
 import * as bcrypt from 'bcrypt';
 
 const SALT_WORK_FACTOR = 10;
+
+export interface UserMethods{
+    generateToken(): void;
+    checkPassword(password: string): Promise<boolean>
+}
+
 @Schema()
 export class User {
     @Prop({required: true, unique: true})
@@ -18,7 +24,7 @@ export class User {
     displayName: string;
 }
 
-export type UserDocument = User & Document;
+export type UserDocument = User & Document & UserMethods;
 export const UserSchema = SchemaFactory.createForClass(User);
 
 UserSchema.methods.generateToken = function () {
@@ -30,7 +36,7 @@ UserSchema.methods.checkPassword = function (password: string): Promise<boolean>
 };
 
 UserSchema.pre('save', async function () {
-    if (this.isModified('password')) return;
+    if (!this.isModified('password')) return;
 
     const salt = await bcrypt.genSalt(SALT_WORK_FACTOR);
     this.password = await bcrypt.hash(this.password, salt);
